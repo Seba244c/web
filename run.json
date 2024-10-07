@@ -1,0 +1,3 @@
+
+[{"name" : "Run Web CLI", "cmd" : "./scripts/build-run.sh"},
+ {"name" : "Reload CMake", "cmd" : "./scripts/configure-cmake.sh"}]
