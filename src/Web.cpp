@@ -1,4 +1,6 @@
-#include <array>
+#include "Connection.h"
+#include "Utils.h"
+#include <argparse/argparse.hpp>
 #include <cstdio>
 #include <filesystem>
 #include <format>
@@ -8,7 +10,6 @@
 #include <string_view>
 #include <toml++/toml.hpp>
 #include <vector>
-using namespace std::string_view_literals;
 
 namespace Web {
 namespace Render {
@@ -66,77 +67,40 @@ static void render_menu(Menu menu) {
 
 } // namespace Render
 
-class String {
-  public:
-    virtual void connect() const = 0;
-    virtual ~String() = default;
-    virtual const std::string &GetName() const = 0;
-};
-
-class SSHString : public String {
-  public:
-    SSHString(std::string name, std::string addres, std::string user)
-        : m_Name(std::move(name)), m_Addres(std::move(addres)),
-          m_User(std::move(user)) {}
-    void connect() const override {
-        std::system(std::format("ssh {}@{}", m_User, m_Addres).c_str());
-    }
-
-    const std::string &GetName() const override { return m_Name; }
-
-  private:
-    std::string m_Name;
-    std::string m_Addres;
-    std::string m_User;
-};
-
 class App {
   public:
+    static void default_config(std::ostream &out) {
+        out << "# Web : SSH Manager, config file" << std::endl;
+        out << "# Define entries like this" << std::endl;
+        out << "# [[strings]]" << std::endl;
+        out << "# name=\"My Name\"" << std::endl;
+        out << "# type=\"ssh\"" << std::endl;
+        out << "# address=\"example.com\"" << std::endl;
+        out << "# user=\"root\"" << std::endl;
+        out << std::endl;
+
+        out << "[[strings]]" << std::endl;
+        out << "name=\"My Ubuntu Box\"" << std::endl;
+        out << "type=\"ssh\"" << std::endl;
+        out << "address=\"example-servers.com\"" << std::endl;
+        out << "user=\"me\"" << std::endl;
+    }
+
     App() {
-        std::filesystem::path config_path;
-        const char *config_dir = std::getenv("XDG_CONFIG_HOME");
+        const auto config_path = Web::Utils::get_web_config_file();
 
-        if (!config_dir) {
-            const char *home_dir = std::getenv("HOME");
-            if (!home_dir) {
-                std::cout << "Failed to find home directory" << std::endl;
-                return;
-            }
-
-            config_path = home_dir;
-            config_path += "/.config";
-        } else {
-            config_path += config_dir;
-        }
-
-        config_path += "/web.toml";
-
-        std::FILE *file = fopen(config_path.c_str(), "r");
-        if (file) {
-            fclose(file);
-        } else {
+        // Create default config if one is not found
+        if (!Utils::file_exists(config_path.c_str())) {
             Render::print("Config file not found, creating one at {}",
                           config_path.c_str());
             std::ofstream outfile(config_path);
 
-            outfile << "# Web : SSH Manager, config file" << std::endl;
-            outfile << "# Define entries like this" << std::endl;
-            outfile << "# [[strings]]" << std::endl;
-            outfile << "# name=\"My Name\"" << std::endl;
-            outfile << "# type=\"ssh\"" << std::endl;
-            outfile << "# address=\"example.com\"" << std::endl;
-            outfile << "# user=\"root\"" << std::endl;
-            outfile << std::endl;
-
-            outfile << "[[strings]]" << std::endl;
-            outfile << "name=\"My Ubuntu Box\"" << std::endl;
-            outfile << "type=\"ssh\"" << std::endl;
-            outfile << "address=\"example-servers.com\"" << std::endl;
-            outfile << "user=\"me\"" << std::endl;
+            default_config(outfile);
 
             outfile.close();
         }
 
+        // Parse Config
         config = toml::parse_file(config_path.c_str());
     }
 
@@ -146,16 +110,7 @@ class App {
         if (toml::array *arr = config["strings"].as_array()) {
             arr->for_each([&strings](auto &&el) {
                 toml::table *string_data = el.as_table();
-                const auto &string_type = (*string_data)["type"].value_or(""sv);
-                if (string_type.starts_with("ssh")) {
-                    const auto address =
-                        (*string_data)["address"].value_or(""sv);
-                    const auto user = (*string_data)["user"].value_or(""sv);
-                    const auto name = (*string_data)["name"].value_or(""sv);
-                    strings.emplace_back(std::make_shared<SSHString>(
-                        (std::string(name)), (std::string(address)),
-                        (std::string(user))));
-                }
+                strings.emplace_back(String::Parse(string_data));
             });
         }
 
@@ -186,6 +141,63 @@ class App {
 } // namespace Web
 
 int main(int argc, char *argv[]) {
+    // Handle Arguments
+    argparse::ArgumentParser program("web", WEB_VERSION);
+
+    /// Alternative Run Types, mutualyl exclusive
+    auto &group = program.add_mutually_exclusive_group();
+    group.add_argument("--config")
+        .help("prints config and config path, and exits")
+        .default_value(false)
+        .implicit_value(true);
+    group.add_argument("--default-config")
+        .help("prints the defualt config, and exits")
+        .default_value(false)
+        .implicit_value(true);
+
+    // Parse
+    try {
+        program.parse_args(argc, argv);
+    } catch (const std::exception &err) {
+        std::cerr << err.what() << std::endl;
+        std::cerr << program;
+        return 1;
+    }
+
+    // Alternate run states or stuff to do before main app
+    if (program["--config"] == true) {
+        const auto config_path = Web::Utils::get_web_config_file();
+
+        std::cout << "Config path: " << config_path.c_str() << std::endl;
+
+        if (Web::Utils::file_exists(config_path.c_str())) {
+            std::ifstream f(config_path.c_str());
+            if (f.is_open()) {
+                std::cout << f.rdbuf();
+                std::cout << std::endl << "^ Config File ^" << std::endl;
+                f.close();
+            } else {
+                std::cerr << "Failed to open config file!" << std::endl;
+                return -1;
+            }
+        } else {
+            std::cout << "Config file not found, creating one" << std::endl;
+            std::ofstream outfile(config_path.c_str());
+
+            Web::App::default_config(outfile);
+            Web::App::default_config(std::cout);
+            std::cout << std::endl << "^ Config File ^" << std::endl;
+
+            outfile.close();
+        }
+
+        return 0;
+    } else if (program["--default-config"] == true) {
+        Web::App::default_config(std::cout);
+        return 0;
+    }
+
+    // Main App
     auto app = Web::App();
     app.menu_main();
 

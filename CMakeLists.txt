@@ -15,13 +15,26 @@ endif()
 add_definitions(-DNOMINMAX)
 
 # Project
-project ("web")
-add_executable(web src/Web.cpp)
+project ("web" VERSION 1.1)
+add_executable(web src/Web.cpp src/Connection.h src/Connection.cpp src/Utils.h src/Utils.cpp)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT web)
+
+# Pre-processor macros
+add_compile_definitions(web PRIVATE WEB_VERSION="${PROJECT_VERSION}")
 
 # Depedencies
 add_subdirectory(vendor/tomlplusplus)
-target_link_libraries(web PRIVATE tomlplusplus::tomlplusplus) 
+
+## argparse
+include(FetchContent)
+FetchContent_Declare(
+    argparse
+    GIT_REPOSITORY https://github.com/p-ranav/argparse.git
+)
+FetchContent_MakeAvailable(argparse)
+
+## Link
+target_link_libraries(web PRIVATE tomlplusplus::tomlplusplus argparse)
 
 # install
 install(TARGETS web DESTINATION /usr/local/bin/)
