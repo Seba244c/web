@@ -1,5 +1,4 @@
 #include "Connection.h"
-#include <format>
 #include <memory>
 using namespace std::string_view_literals;
 
@@ -12,7 +11,9 @@ std::shared_ptr<String> String::Parse(toml::table *string_data) {
 }
 
 void SSHString::connect() const {
-    std::system(std::format("ssh {}@{}", m_User, m_Addres).c_str());
+    std::stringstream ss;
+    ss << "ssh " << m_User << "@" << m_Addres;
+    std::system(ss.str().c_str());
 }
 
 std::shared_ptr<SSHString> SSHString::Parse(toml::table *string_data) {
