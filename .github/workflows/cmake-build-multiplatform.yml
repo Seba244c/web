@@ -18,8 +18,9 @@ jobs:
         c_compiler: [gcc, cl]
         include:
           - os: windows-latest
-            c_compiler: "C:/msys64/mingw64/bin/cl"
-            cpp_compiler: "C:/msys64/mingw64/bin/cl"
+            c_compiler: cl
+            cpp_compiler: cl
+            enviroment_script: "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvarsall.bat"
           - os: ubuntu-latest
             c_compiler: gcc
             cpp_compiler: g++
@@ -56,4 +57,3 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ${{ steps.strings.outputs.build-output-dir }}/*web*
-          name: web-${{ matrix.os }}
