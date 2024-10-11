@@ -118,6 +118,12 @@ class App {
         return strings;
     }
 
+    void connect(const std::shared_ptr<String> &string) {
+        std::cout << "Connecting to string: " << string->GetName().c_str()
+                  << std::endl;
+        string->connect();
+    }
+
     void menu_main() {
         if (!config["strings"]) {
             std::cout << "Found 0 configured strings" << std::endl;
@@ -207,13 +213,14 @@ int main(int argc, char *argv[]) {
 
     // Main App
     auto app = Web::App();
-    if (const int string_id = program.get<int>("connect_id") >= 0) {
+    if (const int string_id = program.get<int>("connect_id"); string_id >= 0) {
         const auto &Strings = app.GetStrings();
         if (string_id >= Strings.size()) {
             std::cerr << "String of specified id not found!" << std::endl;
             return -1;
-        } else {
         }
+
+        app.connect(Strings[string_id]);
     } else
         app.menu_main();
 

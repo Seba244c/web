@@ -15,7 +15,7 @@ endif()
 add_definitions(-DNOMINMAX)
 
 # Project
-project ("web" VERSION 1.2)
+project ("web" VERSION 1.2b)
 add_executable(web src/Web.cpp src/Connection.h src/Connection.cpp src/Utils.h src/Utils.cpp)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT web)
 
