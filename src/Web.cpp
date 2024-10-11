@@ -3,7 +3,6 @@
 #include <argparse/argparse.hpp>
 #include <cstdio>
 #include <filesystem>
-#include <format>
 #include <functional>
 #include <iostream>
 #include <string>
@@ -22,12 +21,6 @@ struct Menu {
     const char *Title;
     const std::vector<MenuOption> Options;
 };
-
-template <typename... Args>
-void print(std::string_view rt_fmt_str, Args &&...args) {
-    std::cout << std::vformat(rt_fmt_str, std::make_format_args(args...))
-              << "\n";
-}
 
 bool try_parse(std::string &input, int &output) {
     try {
@@ -54,11 +47,11 @@ static int get_int(int min, int max) {
 }
 
 static void render_menu(Menu menu) {
-    print("[== {} ==]", menu.Title);
+    printf("[== %s ==]\n", menu.Title);
 
     short range = 0;
     for (auto const &option : menu.Options) {
-        print(" [{}] {}", range++, option.Desc);
+        printf(" [%i] %s\n", range++, option.Desc);
     }
 
     auto selected_option = get_int(0, range - 1);
@@ -91,8 +84,8 @@ class App {
 
         // Create default config if one is not found
         if (!Utils::file_exists(config_path.c_str())) {
-            Render::print("Config file not found, creating one at {}",
-                          config_path.c_str());
+            printf("Config file not found, creating one at %s\n",
+                   config_path.c_str());
             std::ofstream outfile(config_path);
 
             default_config(outfile);
