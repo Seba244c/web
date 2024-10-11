@@ -102,6 +102,7 @@ class App {
 
         // Parse Config
         config = toml::parse_file(config_path.c_str());
+        strings = parse_strings();
     }
 
     std::vector<std::shared_ptr<String>> parse_strings() {
@@ -122,7 +123,6 @@ class App {
             std::cout << "Found 0 configured strings" << std::endl;
             return;
         }
-        const auto strings = parse_strings();
         std::vector<Render::MenuOption> options{};
 
         for (const auto &string : strings) {
@@ -134,8 +134,11 @@ class App {
         Web::Render::render_menu({"Web : SSH Manager", {options}});
     }
 
+    std::vector<std::shared_ptr<String>> &GetStrings() { return strings; }
+
   private:
     toml::table config;
+    std::vector<std::shared_ptr<String>> strings;
 };
 
 } // namespace Web
@@ -143,6 +146,11 @@ class App {
 int main(int argc, char *argv[]) {
     // Handle Arguments
     argparse::ArgumentParser program("web", WEB_VERSION);
+    program.add_argument("connect_id")
+        .help("Connects to the specified server instead of showing a menu. (-1 "
+              "shows a menu)")
+        .scan<'i', int>()
+        .default_value(-1);
 
     /// Alternative Run Types, mutualyl exclusive
     auto &group = program.add_mutually_exclusive_group();
@@ -199,7 +207,15 @@ int main(int argc, char *argv[]) {
 
     // Main App
     auto app = Web::App();
-    app.menu_main();
+    if (const int string_id = program.get<int>("connect_id") >= 0) {
+        const auto &Strings = app.GetStrings();
+        if (string_id >= Strings.size()) {
+            std::cerr << "String of specified id not found!" << std::endl;
+            return -1;
+        } else {
+        }
+    } else
+        app.menu_main();
 
     return 0;
 }
