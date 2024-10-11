@@ -7,28 +7,16 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  build-unix:
     runs-on: ${{ matrix.os }}
-
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [macos-latest, ubuntu-latest]
         build_type: [Release]
-        c_compiler: [gcc, cl]
-        include:
-          - os: windows-latest
-            c_compiler: cl
-            cpp_compiler: cl
-            enviroment_script: "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvarsall.bat"
-          - os: ubuntu-latest
-            c_compiler: gcc
-            cpp_compiler: g++
-        exclude:
-          - os: windows-latest
-            c_compiler: gcc
-          - os: ubuntu-latest
-            c_compiler: cl
+        c_compiler: [gcc]
+        cpp_compiler: [g++]
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,7 +27,6 @@ jobs:
         shell: bash
         run: |
           echo "build-output-dir=${{ github.workspace }}/out" >> "$GITHUB_OUTPUT"
-
       - name: Configure CMake
         run: >
           cmake -B ${{ steps.strings.outputs.build-output-dir }}
@@ -56,4 +43,37 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          path: ${{ steps.strings.outputs.build-output-dir }}/*web*
+          path: ${{ steps.strings.outputs.build-output-dir }}/web
+          name: web-${{ matrix.os }}
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: seanmiddleditch/gha-setup-ninja@master
+      - uses: ilammy/msvc-dev-cmd@v1.4.1
+      - name: Set reusable strings
+        id: strings
+        shell: bash
+        run: |
+          echo "build-output-dir=${{ github.workspace }}/out" >> "$GITHUB_OUTPUT"
+
+      - name: Configure CMake
+        run: >
+          cmake -B ${{ steps.strings.outputs.build-output-dir }}
+          -DCMAKE_CXX_COMPILER=cl
+          -DCMAKE_CXX_STANDARD=20
+          -DCMAKE_C_COMPILER=cl
+          -DCMAKE_BUILD_TYPE=Release
+          -G Ninja
+          -S ${{ github.workspace }}
+
+      - name: Build
+        run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config Release
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          path: ${{ steps.strings.outputs.build-output-dir }}/web.exe
+          name: web-windows-latest
