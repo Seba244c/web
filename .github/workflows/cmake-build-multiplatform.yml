@@ -20,6 +20,7 @@ jobs:
           - os: windows-latest
             c_compiler: cl
             cpp_compiler: cl
+            enviroment_scripts: "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvarsall.bat"
           - os: ubuntu-latest
             c_compiler: gcc
             cpp_compiler: g++
@@ -51,3 +52,9 @@ jobs:
 
       - name: Build
         run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+
+      - name: Upload
+        uses: actions/upload-artifact@v1
+        with:
+          path: ./${ { matrix.config.artifact } }
+          name: ${ { matrix.config.artifact } }
