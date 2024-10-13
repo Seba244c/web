@@ -10,6 +10,10 @@
 #include <toml++/toml.hpp>
 #include <vector>
 
+#ifdef _WIN32
+#include <Windows.h>
+#endif
+
 namespace Web {
 namespace Render {
 
@@ -83,9 +87,9 @@ class App {
         const auto config_path = Web::Utils::get_web_config_file();
 
         // Create default config if one is not found
-        if (!Utils::file_exists(config_path.c_str())) {
+        if (!Utils::file_exists((char *)config_path.c_str())) {
             printf("Config file not found, creating one at %s\n",
-                   config_path.c_str());
+                   (char *)config_path.c_str());
             std::ofstream outfile(config_path);
 
             default_config(outfile);
@@ -175,9 +179,10 @@ int main(int argc, char *argv[]) {
     if (program["--config"] == true) {
         const auto config_path = Web::Utils::get_web_config_file();
 
-        std::cout << "Config path: " << config_path.c_str() << std::endl;
+        std::cout << "Config path: " << (char *)config_path.c_str()
+                  << std::endl;
 
-        if (Web::Utils::file_exists(config_path.c_str())) {
+        if (Web::Utils::file_exists((char *)config_path.c_str())) {
             std::ifstream f(config_path.c_str());
             if (f.is_open()) {
                 std::cout << f.rdbuf();

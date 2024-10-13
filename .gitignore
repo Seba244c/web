@@ -1,4 +1,5 @@
 **.mode
+compile_commands.json
 ### C++ template
 # Prerequisites
 *.d

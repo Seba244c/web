@@ -5,11 +5,20 @@ if [[ "$current_dir" = "scripts" ]]; then
     cd ..
 fi
 
+# Get Os
+os="unnamed"
+if [ "$OSTYPE" == "win32" ] || [ "$OSTYPE" == "msys" ]; then
+    os="win"
+else
+    os="unix"
+fi
+
+# Get release mode
 echo "Configure for Debug or Release mode?"
 select dr in "Debug" "Release"; do
     case $dr in
-        Debug ) cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 --preset x64-debug-unix; rm -f scripts/rel.mode; touch scripts/debug.mode; break;;
-        Release ) cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 --preset x64-release-unix; rm -f scripts/debug.mode; touch scripts/rel.mode; break;;
+        Debug ) cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 --preset x64-debug-${os}; rm -f scripts/rel.mode; touch scripts/debug.mode; break;;
+        Release ) cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 --preset x64-release-${os}; rm -f scripts/debug.mode; touch scripts/rel.mode; break;;
     esac
 done
 

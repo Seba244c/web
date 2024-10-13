@@ -17,7 +17,9 @@
       "inherits": "web-base",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl.exe",
-        "CMAKE_CXX_COMPILER": "cl.exe"
+        "CMAKE_CXX_COMPILER": "cl.exe",
+        "CMAKE_C_LINK_EXECUTABLE": "link.exe",
+        "CMAKE_CXX_LINK_EXECUTABLE": "link.exe"
       },
       "condition": {
         "type": "equals",

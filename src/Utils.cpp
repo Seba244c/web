@@ -4,7 +4,11 @@
 namespace Web::Utils {
 std::filesystem::path get_web_config_file() {
     std::filesystem::path config_path;
+#ifdef _WIN32
+    const char *config_dir = std::getenv("APPDATA");
+#else
     const char *config_dir = std::getenv("XDG_CONFIG_HOME");
+#endif
 
     if (!config_dir) {
         const char *home_dir = std::getenv("HOME");
