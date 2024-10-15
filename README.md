@@ -1,5 +1,6 @@
 ## For Developers
 Dependencies UNIX: `git, ninja, cmake, gcc`
+
 Depedencies Windows: `git, ninja, Visual Studio C++ Desktop Development Tools` *Also, you must use the developer commandprompt or powershell application when running build scripts, or else CMake cant find your compiler*
 
 **Setup**
