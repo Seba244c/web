@@ -14,15 +14,22 @@ else
 fi
 
 # Get release mode
+mode="unset"
 echo "Configure for Debug or Release mode?"
 select dr in "Debug" "Release"; do
     case $dr in
-        Debug ) cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 --preset x64-debug-${os}; rm -f scripts/rel.mode; touch scripts/debug.mode; break;;
-        Release ) cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 --preset x64-release-${os}; rm -f scripts/debug.mode; touch scripts/rel.mode; break;;
+        Debug ) mode="debug"; rm -f scripts/rel.mode; touch scripts/debug.mode; break;;
+        Release ) mode="release"; rm -f scripts/debug.mode; touch scripts/rel.mode; break;;
     esac
 done
 
+# Configure cmake
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 --preset x64-${mode}-${os}
+
 # For clangd
-if [ ! -f ./compile_commands.json ]; then
-    ln -s out/build/x64-debug-unix/compile_commands.json .
+if [ -f ./compile_commands.json ]; then
+    rm ./compile_commands.json
 fi
+
+ln -s out/build/x64-${mode}-${os}/compile_commands.json .
+
